@@ -7,24 +7,79 @@
   <!-- Lien vers le manifest pour personnaliser le nom, l'icône et les couleurs -->
   <link rel="manifest" href="/manifest.json">
   <style>
-    body {
+    /* Réinitialisation et variables CSS */
+    *,
+    *::before,
+    *::after {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
+      padding: 0;
+      box-sizing: border-box;
     }
+    
+    :root {
+      --primary-color: #00bcd4;
+      --primary-hover: #007c8c;
+      --background-gradient: linear-gradient(135deg, #f4f4f4 0%, #e0e0e0 100%);
+      --popup-bg: #ffffff;
+      --popup-text: #333333;
+      --popup-shadow: rgba(0, 0, 0, 0.2);
+      --border-radius: 12px;
+      --transition-speed: 0.5s;
+      --font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+    
+    /* Style global de la page */
+    body {
+      font-family: var(--font-family);
+      background: var(--background-gradient);
+      color: var(--popup-text);
+      font-size: 16px;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Conteneur principal */
+    .main-content {
+      padding: 20px;
+      flex: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+      color: var(--popup-text);
+      margin-bottom: 15px;
+    }
+    
+    p {
+      margin-bottom: 15px;
+    }
+    
+    a {
+      color: var(--primary-color);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    
+    a:hover {
+      color: var(--primary-hover);
+    }
+    
     /* Style de la pop-up d'installation */
     #installPopup {
       position: fixed;
-      bottom: -120px; /* Position initiale hors écran */
+      bottom: -150px; /* Hors de l'écran au départ */
       left: 50%;
       transform: translateX(-50%);
-      background: #fff;
-      color: #333;
-      padding: 20px 20px 10px 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      background: var(--popup-bg);
+      color: var(--popup-text);
+      padding: 20px 20px 15px 20px;
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 16px var(--popup-shadow);
       opacity: 0;
-      transition: bottom 0.5s ease-out, opacity 0.5s ease-out;
+      transition: bottom var(--transition-speed) ease-out, opacity var(--transition-speed) ease-out;
       z-index: 9999;
       width: 90%;
       max-width: 400px;
@@ -32,56 +87,156 @@
       flex-direction: column;
       align-items: center;
     }
+    
     /* Affichage de la pop-up */
     #installPopup.show {
       bottom: 20px;
       opacity: 1;
     }
-    /* En-tête de la pop-up avec titre et bouton de fermeture */
+    
+    /* En-tête de la pop-up */
     #installPopup header {
       width: 100%;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e0e0e0;
     }
+    
     #installPopup header h3 {
-      margin: 0;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 600;
+      color: var(--popup-text);
     }
+    
     #installPopup header button.close-btn {
-      background: none;
+      background: transparent;
       border: none;
-      font-size: 20px;
+      font-size: 24px;
+      line-height: 1;
       cursor: pointer;
       color: #aaa;
-      line-height: 1;
+      transition: color 0.3s ease;
     }
-    /* Message principal */
+    
+    #installPopup header button.close-btn:hover {
+      color: var(--primary-color);
+    }
+    
+    /* Message principal de la pop-up */
     #installPopup p {
-      margin: 15px 0;
       text-align: center;
       font-size: 14px;
+      margin: 15px 0;
     }
+    
     /* Bouton d'installation */
     #installPopup button.install-btn {
-      background: #00bcd4;
+      background: var(--primary-color);
       border: none;
       color: #fff;
-      padding: 10px 20px;
+      padding: 12px 24px;
       border-radius: 6px;
       cursor: pointer;
       font-size: 14px;
+      transition: background-color 0.3s ease, transform 0.2s ease;
     }
+    
     #installPopup button.install-btn:hover {
-      background: #007c8c;
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+    }
+    
+    /* Effet d'animation pour l'apparition de la pop-up */
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out forwards;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    /* Responsive design */
+    @media (min-width: 768px) {
+      #installPopup {
+        max-width: 500px;
+        padding: 25px 25px 20px 25px;
+      }
+      #installPopup header h3 {
+        font-size: 20px;
+      }
+      #installPopup p {
+        font-size: 16px;
+      }
+      #installPopup button.install-btn {
+        font-size: 16px;
+      }
+    }
+    
+    /* Styles supplémentaires pour une interface moderne */
+    input, button, select, textarea {
+      font-family: var(--font-family);
+    }
+    
+    /* Focus styles */
+    button:focus,
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--primary-color);
+    }
+    
+    /* Scrollbar minimaliste pour Webkit */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f0f0f0;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background-color: var(--primary-color);
+      border-radius: 4px;
+    }
+    
+    /* Bouton générique de fermeture (optionnel pour d'autres composants) */
+    .btn-close {
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #aaa;
+      transition: color 0.3s ease;
+    }
+    
+    .btn-close:hover {
+      color: var(--primary-color);
+    }
+    
+    /* Exemple d'un container avec effet d'ombre et arrondi pour une section de contenu */
+    .card {
+      background: #fff;
+      border-radius: var(--border-radius);
+      box-shadow: 0 2px 8px var(--popup-shadow);
+      padding: 20px;
+      margin: 20px 0;
+      transition: transform 0.3s ease;
+    }
+    
+    .card:hover {
+      transform: translateY(-4px);
     }
   </style>
 </head>
 <body>
 
   <!-- Contenu principal de la page -->
-  <div style="padding: 20px;">
+  <div class="main-content">
     <h1>Bienvenue sur notre site</h1>
     <p>Installez notre application pour bénéficier d'un accès rapide et optimisé à nos services.</p>
   </div>
@@ -111,7 +266,7 @@
     if (!isMobile()) {
       console.log("Pop-up désactivé sur desktop.");
     } else {
-      // Écoute de l'événement beforeinstallprompt pour les navigateurs compatibles (Chrome sur Android par exemple)
+      // Écoute de l'événement beforeinstallprompt pour les navigateurs compatibles (ex. Chrome sur Android)
       window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
@@ -151,7 +306,7 @@
       popup.classList.remove('show');
     });
 
-    // Vérification en temps réel via la media query (si supporté) pour mettre à jour l'affichage
+    // Mise à jour en temps réel via la media query pour actualiser l'affichage
     function updatePopupBasedOnDisplayMode() {
       if (window.matchMedia('(display-mode: standalone)').matches) {
         localStorage.setItem('pwaInstalled', 'true');
