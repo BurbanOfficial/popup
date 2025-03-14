@@ -149,16 +149,6 @@
       transform: translateY(-2px);
     }
     
-    /* Effet d'animation pour l'apparition de la pop-up */
-    .fade-in {
-      animation: fadeIn 0.5s ease-in-out forwards;
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    
     /* Responsive design */
     @media (min-width: 768px) {
       #installPopup {
@@ -175,66 +165,9 @@
         font-size: 16px;
       }
     }
-    
-    /* Styles supplémentaires pour une interface moderne */
-    input, button, select, textarea {
-      font-family: var(--font-family);
-    }
-    
-    /* Focus styles */
-    button:focus,
-    input:focus,
-    select:focus,
-    textarea:focus {
-      outline: none;
-      box-shadow: 0 0 0 2px var(--primary-color);
-    }
-    
-    /* Scrollbar minimaliste pour Webkit */
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-    
-    ::-webkit-scrollbar-track {
-      background: #f0f0f0;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-      background-color: var(--primary-color);
-      border-radius: 4px;
-    }
-    
-    /* Bouton générique de fermeture (optionnel pour d'autres composants) */
-    .btn-close {
-      background: transparent;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
-      color: #aaa;
-      transition: color 0.3s ease;
-    }
-    
-    .btn-close:hover {
-      color: var(--primary-color);
-    }
-    
-    /* Exemple d'un container avec effet d'ombre et arrondi pour une section de contenu */
-    .card {
-      background: #fff;
-      border-radius: var(--border-radius);
-      box-shadow: 0 2px 8px var(--popup-shadow);
-      padding: 20px;
-      margin: 20px 0;
-      transition: transform 0.3s ease;
-    }
-    
-    .card:hover {
-      transform: translateY(-4px);
-    }
   </style>
 </head>
 <body>
-
   <!-- Contenu principal de la page -->
   <div class="main-content">
     <h1>Bienvenue sur notre site</h1>
@@ -262,14 +195,17 @@
       return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     }
 
-    // Masquer la pop-up sur desktop
-    if (!isMobile()) {
-      console.log("Pop-up désactivé sur desktop.");
+    // Vérifier si l'application est déjà installée et ne pas afficher la pop-up
+    if (localStorage.getItem('pwaInstalled')) {
+      console.log("L'application est déjà installée sur l'écran d'accueil.");
+    } else if (!isMobile()) {
+      console.log("Pop-up désactivée sur desktop.");
     } else {
-      // Écoute de l'événement beforeinstallprompt pour les navigateurs compatibles (ex. Chrome sur Android)
+      // Pour mobile et si l'application n'est pas encore installée, écoute de beforeinstallprompt
       window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
+        e.preventDefault(); // Empêche l'affichage automatique de la mini-infobulle
         deferredPrompt = e;
+        // Afficher la pop-up après un délai de 3 secondes
         setTimeout(() => {
           popup.classList.add('show');
         }, 3000);
@@ -295,27 +231,26 @@
         }
         deferredPrompt = null;
       } else {
-        alert("Votre navigateur ne supporte pas l'installation automatique. Veuillez utiliser le menu de partage.");
+        // Pour iOS ou navigateurs ne supportant pas beforeinstallprompt
+        alert("Pour installer l'application sur votre écran d'accueil, veuillez appuyer sur le bouton de partage de votre navigateur et sélectionner 'Ajouter à l'écran d'accueil'.");
       }
     });
 
-    // Lorsque l'application est installée
+    // Lors de l'installation (si l'événement appinstalled est supporté)
     window.addEventListener('appinstalled', () => {
       console.log('Application installée.');
       localStorage.setItem('pwaInstalled', 'true');
       popup.classList.remove('show');
     });
 
-    // Mise à jour en temps réel via la media query pour actualiser l'affichage
+    // Mise à jour en temps réel du mode d'affichage via media query
     function updatePopupBasedOnDisplayMode() {
       if (window.matchMedia('(display-mode: standalone)').matches) {
         localStorage.setItem('pwaInstalled', 'true');
         popup.classList.remove('show');
       } else {
-        if (localStorage.getItem('pwaInstalled')) {
-          localStorage.removeItem('pwaInstalled');
-        }
-        if (isMobile()) {
+        // Si le flag est absent et qu'on est en mode navigateur, afficher la pop-up (sur mobile)
+        if (!localStorage.getItem('pwaInstalled') && isMobile()) {
           popup.classList.add('show');
         }
       }
@@ -326,8 +261,8 @@
     } else {
       setInterval(updatePopupBasedOnDisplayMode, 2000);
     }
+    // Vérification initiale
     updatePopupBasedOnDisplayMode();
   </script>
-
 </body>
 </html>
