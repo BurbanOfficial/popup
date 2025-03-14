@@ -1,18 +1,18 @@
 {
-    "name": "Burban",
-    "short_name": "Burban",
+    "name": "Nom de votre Application",
+    "short_name": "AppName",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#00bcd4",
     "icons": [
       {
-        "src": "https://burbanofficial.com/favicon.png",
+        "src": "icon-192x192.png",
         "sizes": "192x192",
         "type": "image/png"
       },
       {
-        "src": "https://burbanofficial.com/favicon.png",
+        "src": "icon-512x512.png",
         "sizes": "512x512",
         "type": "image/png"
       }
