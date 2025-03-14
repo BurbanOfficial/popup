@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Installer l'application</title>
+  <!-- Lien vers le manifest pour personnaliser le nom, l'icône et les couleurs -->
+  <link rel="manifest" href="manifest.json">
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,700&display=swap" rel="stylesheet">
+  <style>
+    /* Réinitialisation et variables CSS */
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --primary-color: #90bed6;
+      --primary-hover: #587280;
+      --background-gradient: #transparent;
+      --popup-bg: #ffffff;
+      --popup-text: #333333;
+      --popup-shadow: rgba(0, 0, 0, 0.2);
+      --border-radius: 12px;
+      --transition-speed: 0.5s;
+      --font-family: 'Satoshi', sans-serif;
+    }
+    
+    /* Style global de la page */
+    body {
+      font-family: var(--font-family);
+      background: var(--background-gradient);
+      color: var(--popup-text);
+      font-size: 16px;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Conteneur principal */
+    .main-content {
+      padding: 20px;
+      flex: 1;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+      color: var(--popup-text);
+      margin-bottom: 15px;
+    }
+    
+    p {
+      margin-bottom: 15px;
+    }
+    
+    a {
+      color: var(--primary-color);
+      text-decoration: none;
+      transition: color 0.3s ease;
+    }
+    
+    a:hover {
+      color: var(--primary-hover);
+    }
+    
+    /* Style de la pop-up d'installation */
+    #installPopup {
+      position: fixed;
+      bottom: -150px; /* Hors de l'écran au départ */
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--popup-bg);
+      color: var(--popup-text);
+      padding: 20px 20px 15px 20px;
+      border-radius: var(--border-radius);
+      box-shadow: 0 4px 16px var(--popup-shadow);
+      opacity: 0;
+      transition: bottom var(--transition-speed) ease-out, opacity var(--transition-speed) ease-out;
+      z-index: 9999;
+      width: 90%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    /* Affichage de la pop-up */
+    #installPopup.show {
+      bottom: 20px;
+      opacity: 1;
+    }
+    
+    /* En-tête de la pop-up */
+    #installPopup header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    #installPopup header h3 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--popup-text);
+    }
+    
+    #installPopup header button.close-btn {
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      line-height: 1;
+      cursor: pointer;
+      color: #aaa;
+      transition: color 0.3s ease;
+    }
+    
+    #installPopup header button.close-btn:hover {
+      color: var(--primary-color);
+    }
+    
+    /* Message principal de la pop-up */
+    #installPopup p {
+      text-align: center;
+      font-size: 14px;
+      margin: 15px 0;
+    }
+    
+    /* Bouton d'installation */
+    #installPopup button.install-btn {
+      background: var(--primary-color);
+      border: none;
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    
+    #installPopup button.install-btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+    }
+    
+    /* Responsive design */
+    @media (min-width: 768px) {
+      #installPopup {
+        max-width: 500px;
+        padding: 25px 25px 20px 25px;
+      }
+      #installPopup header h3 {
+        font-size: 20px;
+      }
+      #installPopup p {
+        font-size: 16px;
+      }
+      #installPopup button.install-btn {
+        font-size: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Pop-up d'installation -->
+  <div id="installPopup">
+    <header>
+      <h3>Installer l'application</h3>
+      <button class="close-btn" id="closePopup">&times;</button>
+    </header>
+    <p>Ajoutez notre application à votre écran d'accueil pour une expérience fluide et rapide.</p>
+    <button class="install-btn" id="installButton">Installer</button>
+  </div>
+
+  <script>
+    let deferredPrompt;
+    const popup = document.getElementById('installPopup');
+    const installButton = document.getElementById('installButton');
+    const closePopupButton = document.getElementById('closePopup');
+
+    // Fonction pour détecter si l'appareil est mobile
+    function isMobile() {
+      return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    }
+
+    // Vérifier si l'application est déjà installée et ne pas afficher la pop-up
+    if (localStorage.getItem('pwaInstalled')) {
+      console.log("L'application est déjà installée sur l'écran d'accueil.");
+    } else if (!isMobile()) {
+      console.log("Pop-up désactivée sur desktop.");
+    } else {
+      // Pour mobile et si l'application n'est pas encore installée, écoute de beforeinstallprompt
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault(); // Empêche l'affichage automatique de la mini-infobulle
+        deferredPrompt = e;
+        // Afficher la pop-up après un délai de 3 secondes
+        setTimeout(() => {
+          popup.classList.add('show');
+        }, 3000);
+      });
+    }
+
+    // Action sur le bouton de fermeture de la pop-up
+    closePopupButton.addEventListener('click', () => {
+      popup.classList.remove('show');
+    });
+
+    // Action sur le bouton d'installation
+    installButton.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          console.log('L’utilisateur a accepté l’installation.');
+          localStorage.setItem('pwaInstalled', 'true');
+          popup.classList.remove('show');
+        } else {
+          console.log('L’utilisateur a décliné l’installation.');
+        }
+        deferredPrompt = null;
+      } else {
+        // Pour iOS ou navigateurs ne supportant pas beforeinstallprompt
+        alert("Pour installer l'application sur votre écran d'accueil, veuillez appuyer sur le bouton de partage de votre navigateur et sélectionner 'Ajouter à l'écran d'accueil'.");
+      }
+    });
+
+    // Lors de l'installation (si l'événement appinstalled est supporté)
+    window.addEventListener('appinstalled', () => {
+      console.log('Application installée.');
+      localStorage.setItem('pwaInstalled', 'true');
+      popup.classList.remove('show');
+    });
+
+    // Mise à jour en temps réel du mode d'affichage via media query
+    function updatePopupBasedOnDisplayMode() {
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        localStorage.setItem('pwaInstalled', 'true');
+        popup.classList.remove('show');
+      } else {
+        // Si le flag est absent et qu'on est en mode navigateur, afficher la pop-up (sur mobile)
+        if (!localStorage.getItem('pwaInstalled') && isMobile()) {
+          popup.classList.add('show');
+        }
+      }
+    }
+    if (window.matchMedia('(display-mode: standalone)').addEventListener) {
+      const mql = window.matchMedia('(display-mode: standalone)');
+      mql.addEventListener('change', updatePopupBasedOnDisplayMode);
+    } else {
+      setInterval(updatePopupBasedOnDisplayMode, 2000);
+    }
+    // Vérification initiale
+    updatePopupBasedOnDisplayMode();
+  </script>
+</body>
+</html>
