@@ -3,39 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ajouter à l'écran d'accueil</title>
+  <title>Installer l'application</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
       background: #f4f4f4;
     }
-    /* Pop-up minimaliste et animé */
-    #addPopup {
+    /* Style minimaliste et animé du pop-up */
+    #installPopup {
       position: fixed;
-      bottom: -100px; /* Position initiale hors de l'écran */
+      bottom: -100px; /* caché initialement */
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(0, 0, 0, 0.85);
+      background: rgba(0,0,0,0.85);
       color: #fff;
       padding: 12px 20px;
       border-radius: 8px 8px 0 0;
-      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.5);
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
       opacity: 0;
       transition: bottom 0.5s ease-out, opacity 0.5s ease-out;
       z-index: 9999;
       display: flex;
       align-items: center;
     }
-    /* Classe pour afficher le pop-up */
-    #addPopup.show {
+    #installPopup.show {
       bottom: 20px;
       opacity: 1;
     }
-    #addPopup span {
+    #installPopup span {
       font-size: 16px;
     }
-    #addPopup button {
+    #installPopup button {
       background: #00bcd4;
       border: none;
       color: #fff;
@@ -45,7 +44,7 @@
       margin-left: 15px;
       font-size: 14px;
     }
-    #addPopup button:hover {
+    #installPopup button:hover {
       background: #007c8c;
     }
   </style>
@@ -55,57 +54,74 @@
   <!-- Contenu principal de la page -->
   <div style="padding: 20px;">
     <h1>Bienvenue sur notre site</h1>
-    <p>Profitez d'un accès rapide en ajoutant notre site à votre écran d'accueil.</p>
+    <p>Profitez d'un accès rapide en installant notre application sur votre appareil mobile.</p>
   </div>
-
-  <!-- Pop-up d'ajout à l'écran d'accueil -->
-  <div id="addPopup">
-    <span id="popupMessage">Ajouter ce site à l'écran d'accueil</span>
-    <button id="actionButton">Ajouter</button>
+  
+  <!-- Pop-up d'installation -->
+  <div id="installPopup">
+    <span id="popupMessage">Installer l'application sur votre écran d'accueil</span>
+    <button id="installButton">Installer</button>
   </div>
-
+  
   <script>
-    // Détection du système d'exploitation mobile ou desktop
-    function getOperatingSystem() {
-      var userAgent = navigator.userAgent || navigator.vendor || window.opera;
-      if (/windows phone/i.test(userAgent)) {
-        return "Windows Phone";
-      }
-      if (/android/i.test(userAgent)) {
-        return "Android";
-      }
-      if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
-        return "iOS";
-      }
-      return "desktop";
+    let deferredPrompt;
+    const popup = document.getElementById('installPopup');
+    const installButton = document.getElementById('installButton');
+
+    // Fonction pour détecter si l'appareil est mobile (Android, iOS, etc.)
+    function isMobile() {
+      return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     }
 
-    // Fonction pour afficher le pop-up avec animation
-    function showPopup() {
-      var popup = document.getElementById('addPopup');
-      popup.classList.add('show');
+    // Vérifier si l'utilisateur a déjà installé l'application
+    const isInstalled = localStorage.getItem('pwaInstalled');
+
+    // Ne rien faire sur desktop ou si déjà installé
+    if (!isMobile() || isInstalled) {
+      console.log("Installation non nécessaire sur desktop ou déjà réalisée.");
+    } else {
+      // Écouter l'événement beforeinstallprompt (disponible sur les navigateurs compatibles, ex. Chrome sur Android)
+      window.addEventListener('beforeinstallprompt', (e) => {
+        // Empêche l'apparition automatique de la mini-infobulle
+        e.preventDefault();
+        // Sauvegarde de l'événement pour pouvoir le déclencher plus tard
+        deferredPrompt = e;
+        // Afficher le pop-up après un délai de 3 secondes
+        setTimeout(() => {
+          popup.classList.add('show');
+        }, 3000);
+      });
     }
 
-    // Gestion de l'action lors du clic sur le bouton
-    document.getElementById('actionButton').addEventListener('click', function() {
-      var os = getOperatingSystem();
-      if (os === "Android") {
-        alert("Sur Android, ouvrez le menu de Chrome et sélectionnez 'Ajouter à l'écran d'accueil'.");
-      } else if (os === "iOS") {
-        alert("Sur iOS, appuyez sur le bouton de partage dans Safari et choisissez 'Ajouter à l'écran d'accueil'.");
-      } else if (os === "Windows Phone") {
-        alert("Sur Windows Phone, utilisez l'option de votre navigateur pour ajouter à l'écran d'accueil.");
+    // Au clic sur le bouton d'installation
+    installButton.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        // Déclenche l'invite d'installation native
+        deferredPrompt.prompt();
+        // Attendre la réponse de l'utilisateur
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          console.log('L\'utilisateur a accepté l\'installation.');
+          // Marquer l'installation pour ne plus afficher le pop-up
+          localStorage.setItem('pwaInstalled', 'true');
+        } else {
+          console.log('L\'utilisateur a refusé l\'installation.');
+        }
+        // Nettoyer l'événement différé
+        deferredPrompt = null;
+        // Masquer le pop-up
+        popup.classList.remove('show');
       } else {
-        // Si l'appareil est un desktop (ou inconnu), afficher un message spécifique
-        alert("Ce site est optimisé pour les appareils mobiles. Pour ajouter à l'écran d'accueil, veuillez utiliser un smartphone ou une tablette.");
+        // Si aucune invite n'est disponible (cas fréquent sur iOS ou navigateurs non compatibles)
+        alert("L'installation automatique n'est pas prise en charge sur votre navigateur. Veuillez ajouter l'application manuellement via le menu de partage.");
       }
     });
 
-    // Afficher le pop-up 3 secondes après le chargement de la page
-    window.addEventListener('load', function() {
-      setTimeout(function() {
-        showPopup();
-      }, 3000);
+    // Optionnel : écoute de l'événement appinstalled (si le navigateur le supporte)
+    window.addEventListener('appinstalled', () => {
+      console.log('Application installée avec succès.');
+      localStorage.setItem('pwaInstalled', 'true');
+      popup.classList.remove('show');
     });
   </script>
 
