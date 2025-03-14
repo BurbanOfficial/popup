@@ -10,7 +10,7 @@
       font-family: Arial, sans-serif;
       background: #f4f4f4;
     }
-    /* Style minimaliste et animé du pop-up */
+    /* Pop-up minimaliste et animé */
     #installPopup {
       position: fixed;
       bottom: -100px; /* caché initialement */
@@ -27,6 +27,7 @@
       display: flex;
       align-items: center;
     }
+    /* Classe pour afficher le pop-up */
     #installPopup.show {
       bottom: 20px;
       opacity: 1;
@@ -54,7 +55,7 @@
   <!-- Contenu principal de la page -->
   <div style="padding: 20px;">
     <h1>Bienvenue sur notre site</h1>
-    <p>Profitez d'un accès rapide en installant notre application sur votre appareil mobile.</p>
+    <p>Installez notre application pour un accès rapide directement depuis votre écran d'accueil.</p>
   </div>
   
   <!-- Pop-up d'installation -->
@@ -68,25 +69,40 @@
     const popup = document.getElementById('installPopup');
     const installButton = document.getElementById('installButton');
 
-    // Fonction pour détecter si l'appareil est mobile (Android, iOS, etc.)
+    // Détecte si l'appareil est mobile
     function isMobile() {
       return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     }
 
-    // Vérifier si l'utilisateur a déjà installé l'application
-    const isInstalled = localStorage.getItem('pwaInstalled');
+    // Mise à jour de l'affichage du pop-up selon le mode d'affichage
+    function updatePopupBasedOnDisplayMode() {
+      // Si l'application est lancée en mode standalone, on considère qu'elle est installée.
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        localStorage.setItem('pwaInstalled', 'true');
+        popup.classList.remove('show');
+      } else {
+        // Si on est en mode navigateur, on vérifie le flag stocké.
+        // S'il était marqué comme installé, on considère qu'il a été supprimé.
+        if (localStorage.getItem('pwaInstalled')) {
+          localStorage.removeItem('pwaInstalled');
+        }
+        // On affiche le pop-up si l'appareil est mobile
+        if (isMobile()) {
+          popup.classList.add('show');
+        }
+      }
+    }
 
-    // Ne rien faire sur desktop ou si déjà installé
-    if (!isMobile() || isInstalled) {
-      console.log("Installation non nécessaire sur desktop ou déjà réalisée.");
+    // Ne rien faire sur desktop
+    if (!isMobile()) {
+      console.log("Pop-up désactivé sur desktop.");
     } else {
-      // Écouter l'événement beforeinstallprompt (disponible sur les navigateurs compatibles, ex. Chrome sur Android)
+      // Écouter l'événement beforeinstallprompt pour les navigateurs compatibles (ex. Chrome sur Android)
       window.addEventListener('beforeinstallprompt', (e) => {
-        // Empêche l'apparition automatique de la mini-infobulle
+        // Empêche l'affichage automatique de la mini-infobulle
         e.preventDefault();
-        // Sauvegarde de l'événement pour pouvoir le déclencher plus tard
         deferredPrompt = e;
-        // Afficher le pop-up après un délai de 3 secondes
+        // Afficher le pop-up après 3 secondes
         setTimeout(() => {
           popup.classList.add('show');
         }, 3000);
@@ -96,33 +112,42 @@
     // Au clic sur le bouton d'installation
     installButton.addEventListener('click', async () => {
       if (deferredPrompt) {
-        // Déclenche l'invite d'installation native
         deferredPrompt.prompt();
-        // Attendre la réponse de l'utilisateur
         const { outcome } = await deferredPrompt.userChoice;
         if (outcome === 'accepted') {
-          console.log('L\'utilisateur a accepté l\'installation.');
-          // Marquer l'installation pour ne plus afficher le pop-up
+          console.log('Installation acceptée.');
           localStorage.setItem('pwaInstalled', 'true');
+          popup.classList.remove('show');
         } else {
-          console.log('L\'utilisateur a refusé l\'installation.');
+          console.log('Installation refusée.');
         }
-        // Nettoyer l'événement différé
         deferredPrompt = null;
-        // Masquer le pop-up
-        popup.classList.remove('show');
       } else {
-        // Si aucune invite n'est disponible (cas fréquent sur iOS ou navigateurs non compatibles)
-        alert("L'installation automatique n'est pas prise en charge sur votre navigateur. Veuillez ajouter l'application manuellement via le menu de partage.");
+        // Si aucune invite n'est disponible (cas d'iOS ou d'autres navigateurs)
+        alert("Votre navigateur ne supporte pas l'installation automatique. Veuillez ajouter l'application via le menu de partage.");
       }
     });
 
-    // Optionnel : écoute de l'événement appinstalled (si le navigateur le supporte)
+    // Événement appinstalled : l'application vient d'être installée
     window.addEventListener('appinstalled', () => {
-      console.log('Application installée avec succès.');
+      console.log('Application installée.');
       localStorage.setItem('pwaInstalled', 'true');
       popup.classList.remove('show');
     });
+
+    // Mise à jour en temps réel grâce à la media query (si supporté)
+    if (window.matchMedia('(display-mode: standalone)').addEventListener) {
+      const mql = window.matchMedia('(display-mode: standalone)');
+      mql.addEventListener('change', (e) => {
+        updatePopupBasedOnDisplayMode();
+      });
+    } else {
+      // Sinon, on vérifie périodiquement (toutes les 2 secondes)
+      setInterval(updatePopupBasedOnDisplayMode, 2000);
+    }
+
+    // Vérification initiale lors du chargement
+    updatePopupBasedOnDisplayMode();
   </script>
 
 </body>
